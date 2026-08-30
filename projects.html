@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Projects</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav>
+        <span class="brand">Projects</span>
+        <a href="index.html">Chat</a>
+        <a id="logout-link">Log out</a>
+    </nav>
+
+    <main id="project-list">
+        <p class="hint">Loading…</p>
+    </main>
+
+    <script src="config.js"></script>
+    <script src="api.js"></script>
+    <script>
+        document.getElementById('logout-link').addEventListener('click', () => api.logout());
+
+        (async () => {
+            const { auth_required } = await api.session();
+            if (auth_required && !localStorage.getItem('personal_ai_token')) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const container = document.getElementById('project-list');
+            let projects;
+            try {
+                projects = await api.projects();
+            } catch (err) {
+                container.innerHTML = `<p class="hint">Couldn't load projects: ${err.message}</p>`;
+                return;
+            }
+
+            if (projects.length === 0) {
+                container.innerHTML = `<p class="hint">No projects yet. Build one from the chat with
+                    <code>/trailer &lt;name&gt; | &lt;idea&gt;</code> or
+                    <code>/musicvideo &lt;name&gt; | &lt;theme&gt;</code>.</p>`;
+                return;
+            }
+
+            container.innerHTML = projects.map(p => `
+                <div class="project-card">
+                    <h3>${p.name}</h3>
+                    ${p.outputs.length
+                        ? '<ul>' + p.outputs.map(f =>
+                            `<li><a href="${api.downloadUrl(p.name, f)}">${f}</a></li>`
+                          ).join('') + '</ul>'
+                        : '<p class="hint">No finished output yet.</p>'}
+                </div>
+            `).join('');
+        })();
+    </script>
+</body>
+</html>
