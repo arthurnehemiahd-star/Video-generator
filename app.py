@@ -30,7 +30,7 @@ app = Flask(__name__)
 
 SECRET_KEY = os.environ.get("FLASK_SECRET_KEY") or "dev-only-change-me"  # see README before hosting beyond localhost
 TOKEN_MAX_AGE = 60 * 60 * 24 * 7  # 7 days
-_signer = URLSafeTimedSerializer(SECRET_KEY, salt="personal-ai-auth")
+_signer = URLSafeTimedSerializer(SECRET_KEY, salt="video-generator-auth")
 
 # Frontend origin(s) allowed to call this API. Override with
 # FRONTEND_ORIGIN if you're serving the frontend from somewhere other
