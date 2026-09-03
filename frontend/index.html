@@ -11,7 +11,6 @@
     <nav>
         <span class="brand" id="brand">Video Generator</span>
         <a href="projects.html">Projects</a>
-        <a id="logout-link">Log out</a>
     </nav>
 
     <main>
@@ -39,122 +38,79 @@
         </p>
     </main>
 
-    <!-- Configuration -->
     <script src="config.js"></script>
-
-    <!-- Backend API -->
     <script src="api.js"></script>
 
     <script>
-        const log = document.getElementById('chat-log');
-        const form = document.getElementById('chat-form');
-        const input = document.getElementById('chat-input');
+        const log = document.getElementById("chat-log");
+        const form = document.getElementById("chat-form");
+        const input = document.getElementById("chat-input");
 
-        let assistantName = 'Video Generator';
+        const assistantName = "Video Generator";
 
         function addMessage(role, name, text) {
-            const div = document.createElement('div');
+            const div = document.createElement("div");
 
-            div.className = 'msg ' + role;
+            div.className = "msg " + role;
 
             div.innerHTML =
-                '<strong>' + name + ':</strong> <span></span>';
+                "<strong>" + name + ":</strong> <span></span>";
 
-            div.querySelector('span').textContent = text;
+            div.querySelector("span").textContent = text;
 
             log.appendChild(div);
             log.scrollTop = log.scrollHeight;
         }
 
-        // Log out
-        document
-            .getElementById('logout-link')
-            .addEventListener('click', () => api.logout());
-
-
-        // Send message to backend
-        form.addEventListener('submit', async (e) => {
+        form.addEventListener("submit", async (e) => {
             e.preventDefault();
 
             const text = input.value.trim();
 
             if (!text) return;
 
-            addMessage('user', 'You', text);
+            addMessage("user", "You", text);
 
-            input.value = '';
+            input.value = "";
+            input.focus();
 
             try {
                 const data = await api.sendMessage(text);
 
                 addMessage(
-                    'assistant',
+                    "assistant",
                     assistantName,
                     data.reply
                 );
 
             } catch (err) {
-
                 addMessage(
-                    'assistant',
+                    "assistant",
                     assistantName,
-                    `Error: ${err.message}`
+                    "Error: " + err.message
                 );
-
             }
         });
 
-
-        // Check login session and load history
+        // Load previous conversation
         (async () => {
-
             try {
+                const history = await api.history();
 
-                const { auth_required } = await api.session();
-
-                if (
-                    auth_required &&
-                    !localStorage.getItem('video_generator_token')
-                ) {
-                    window.location.href = 'login.html';
-                    return;
-                }
-
-                try {
-
-                    const history = await api.history();
-
-                    for (const msg of history) {
-
-                        addMessage(
-                            msg.role,
-                            msg.role === 'user'
-                                ? 'You'
-                                : assistantName,
-                            msg.content
-                        );
-
-                    }
-
-                } catch (err) {
-
-                    // History loading failure isn't fatal.
-                    // The chat can still work.
-
+                for (const msg of history) {
+                    addMessage(
+                        msg.role,
+                        msg.role === "user"
+                            ? "You"
+                            : assistantName,
+                        msg.content
+                    );
                 }
 
             } catch (err) {
-
-                addMessage(
-                    'assistant',
-                    assistantName,
-                    `Connection error: ${err.message}`
-                );
-
+                console.log("History could not be loaded:", err.message);
             }
-
         })();
-
     </script>
 
 </body>
