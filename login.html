@@ -29,8 +29,13 @@
             const errorEl = document.getElementById("error-msg");
             errorEl.style.display = "none";
             try {
-                await api.login(document.getElementById("password").value);
-                window.location.href = "index.html";
+                const result = await api.login(
+    document.getElementById("password").value
+);
+
+alert("LOGIN REQUEST WORKED!");
+
+window.location.href = "index.html";
             } catch (err) {
                 errorEl.textContent = err.message;
                 errorEl.style.display = "block";
