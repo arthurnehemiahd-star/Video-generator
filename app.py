@@ -25,6 +25,7 @@ from flask import Flask, request, jsonify, send_file
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 
 from ai_brain import config, memory, commands, ai_client, auth, files
+from ai_brain.creator import video_generator
 
 app = Flask(__name__)
 
