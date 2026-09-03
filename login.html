@@ -2,100 +2,41 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Video Generator - Sign in</title>
+    <title>Video Generator</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body class="center-page">
 
-    <form id="login-form" class="login-box">
-
-        <h1>🔒 Access Software</h1>
-
-        <p class="error" id="error-msg" style="display:none"></p>
-
-        <input
-            type="password"
-            id="password"
-            placeholder="Password"
-            autofocus
-            required
-        >
-
-        <button type="submit">Enter</button>
-
-    </form>
+    <div class="login-box">
+        <h1>🎬 Video Generator</h1>
+        <p>Connecting to your software...</p>
+    </div>
 
     <script>
         const API_BASE_URL =
             "https://video-generator-seqn.onrender.com";
 
-        const TOKEN_KEY = "video_generator_token";
+        fetch(`${API_BASE_URL}/api/session`)
+            .then(response => response.json())
+            .then(data => {
 
-        const form =
-            document.getElementById("login-form");
-
-        const password =
-            document.getElementById("password");
-
-        const errorEl =
-            document.getElementById("error-msg");
-
-
-        form.addEventListener("submit", async (e) => {
-
-            e.preventDefault();
-
-            errorEl.style.display = "none";
-
-            try {
-
-                const response = await fetch(
-                    `${API_BASE_URL}/api/login`,
-                    {
-                        method: "POST",
-
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-
-                        body: JSON.stringify({
-                            password: password.value
-                        })
-                    }
-                );
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(
-                        data.error || "Login failed"
-                    );
+                if (data.auth_required === false) {
+                    window.location.href = "index.html";
+                } else {
+                    window.location.href = "login.html";
                 }
 
-                if (data.token) {
+            })
+            .catch(error => {
 
-                    localStorage.setItem(
-                        TOKEN_KEY,
-                        data.token
-                    );
+                document.querySelector(".login-box").innerHTML = `
+                    <h1>Connection Error</h1>
+                    <p>Could not connect to the backend.</p>
+                `;
 
-                }
-
-                window.location.href = "index.html";
-
-            } catch (err) {
-
-                errorEl.textContent =
-                    err.message;
-
-                errorEl.style.display =
-                    "block";
-
-            }
-
-        });
-
+                console.error(error);
+            });
     </script>
 
 </body>
