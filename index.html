@@ -1,198 +1,337 @@
 <!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>Video Generator</title>
 
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="style.css">
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+```
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Video Generator</title>
+
+<link
+    rel="icon"
+    href="/favicon.svg"
+    type="image/svg+xml"
+>
+
+<link
+    rel="stylesheet"
+    href="style.css"
+>
+```
+
 </head>
 
 <body>
 
-    <nav>
-        <span class="brand" id="brand">Video Generator</span>
-        <a href="projects.html">Projects</a>
-        <a id="logout-link">Log out</a>
-    </nav>
+```
+<!-- =========================
+     NAVIGATION
+========================== -->
 
-    <main>
+<nav>
 
-        <!-- ========================= -->
-        <!-- AI VIDEO GENERATOR -->
-        <!-- ========================= -->
+    <span
+        class="brand"
+        id="brand"
+    >
+        Video Generator
+    </span>
 
-        <section class="video-generator">
+    <a href="projects.html">
+        Projects
+    </a>
 
-            <h1>🎬 AI Video Generator</h1>
+    <a
+        href="#"
+        id="logout-link"
+    >
+        Log out
+    </a>
 
-            <p>
-                Describe any video you want and choose how long it should be.
-            </p>
+</nav>
 
-            <textarea
-                id="video-description"
-                placeholder="Example: Create a cinematic video about a student discovering a secret room at school..."
-                rows="6"
-            ></textarea>
 
-            <div class="video-options">
+<!-- =========================
+     MAIN
+========================== -->
 
-                <label for="video-duration">
-                    Duration
-                </label>
+<main>
 
-                <select id="video-duration">
-                    <option value="10">10 seconds</option>
-                    <option value="15">15 seconds</option>
-                    <option value="30" selected>30 seconds</option>
-                    <option value="45">45 seconds</option>
-                    <option value="60">1 minute</option>
-                    <option value="90">1 minute 30 seconds</option>
-                    <option value="120">2 minutes</option>
-                </select>
 
-            </div>
+    <!-- =========================
+         AI VIDEO GENERATOR
+    ========================== -->
+
+    <section class="video-generator">
+
+        <h1>
+            🎬 AI Video Generator
+        </h1>
+
+        <p>
+            Describe any video we want to create,
+            choose the duration, and let our generator
+            create the MP4.
+        </p>
+
+
+        <textarea
+            id="video-description"
+            rows="7"
+            placeholder="Example: Create a cinematic video about a student discovering a secret room at school..."
+        ></textarea>
+
+
+        <div class="video-options">
+
+            <label for="video-duration">
+                Duration
+            </label>
+
+            <select
+                id="video-duration"
+            >
+
+                <option value="10">
+                    10 seconds
+                </option>
+
+                <option value="15">
+                    15 seconds
+                </option>
+
+                <option value="30">
+                    30 seconds
+                </option>
+
+                <option value="45">
+                    45 seconds
+                </option>
+
+                <option value="60">
+                    1 minute
+                </option>
+
+                <option value="90">
+                    1 minute 30 seconds
+                </option>
+
+                <option value="120">
+                    2 minutes
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <button
+            id="generate-video-button"
+            type="button"
+        >
+            🎬 Generate Video
+        </button>
+
+
+        <div
+            id="video-status"
+            style="margin-top: 15px;"
+        ></div>
+
+
+        <!-- VIDEO RESULT -->
+
+        <div
+            id="video-result"
+            style="display: none; margin-top: 25px;"
+        >
+
+            <h2>
+                🎉 Our video is ready!
+            </h2>
+
+
+            <video
+                id="generated-video"
+                controls
+                playsinline
+                width="100%"
+            ></video>
+
+
+            <br><br>
+
+
+            <a
+                id="download-video"
+                class="download-button"
+                href="#"
+            >
+                ⬇️ Download MP4
+            </a>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =========================
+         LOCAL AI ASSISTANT
+    ========================== -->
+
+    <section class="chat-section">
+
+        <h2>
+            💬 AI Assistant
+        </h2>
+
+
+        <div
+            id="chat-log"
+        ></div>
+
+
+        <form
+            id="chat-form"
+        >
+
+            <input
+                type="text"
+                id="chat-input"
+                placeholder="Message our assistant..."
+                autocomplete="off"
+            >
+
 
             <button
-                id="generate-video-button"
-                type="button"
+                type="submit"
             >
-                🎬 Generate Video
+                Send
             </button>
 
-            <div id="video-status"></div>
-
-            <div
-                id="video-result"
-                style="display: none;"
-            >
-
-                <h2>🎉 Our video is ready!</h2>
-
-                <video
-                    id="generated-video"
-                    controls
-                    width="100%"
-                ></video>
-
-                <br>
-
-                <a
-                    id="download-video"
-                    class="download-button"
-                    href="#"
-                >
-                    ⬇️ Download MP4
-                </a>
-
-            </div>
-
-        </section>
+        </form>
 
 
-        <!-- ========================= -->
-        <!-- CHAT ASSISTANT -->
-        <!-- ========================= -->
+        <p class="hint">
+            Our assistant is currently running in local mode.
+        </p>
 
-        <section class="chat-section">
-
-            <h2>💬 AI Assistant</h2>
-
-            <div id="chat-log"></div>
-
-            <form id="chat-form">
-
-                <input
-                    type="text"
-                    id="chat-input"
-                    placeholder="Message, or a /command like /help"
-                    autocomplete="off"
-                    autofocus
-                >
-
-                <button type="submit">
-                    Send
-                </button>
-
-            </form>
-
-            <p class="hint">
-                Try
-                <code>/help</code>,
-                <code>/trailer &lt;project&gt; | &lt;idea&gt;</code>,
-                <code>/musicvideo &lt;project&gt; | &lt;theme&gt;</code>,
-                <code>/file list</code>,
-                <code>/open list</code>
-            </p>
-
-        </section>
-
-    </main>
+    </section>
 
 
-    <script src="config.js"></script>
-    <script src="api.js"></script>
-
-    <script>
-
-        // ==========================================
-        // VIDEO GENERATOR
-        // ==========================================
-
-        const descriptionInput =
-            document.getElementById("video-description");
-
-        const durationInput =
-            document.getElementById("video-duration");
-
-        const generateButton =
-            document.getElementById("generate-video-button");
-
-        const videoStatus =
-            document.getElementById("video-status");
-
-        const videoResult =
-            document.getElementById("video-result");
-
-        const generatedVideo =
-            document.getElementById("generated-video");
-
-        const downloadVideo =
-            document.getElementById("download-video");
+</main>
 
 
-        generateButton.addEventListener(
-            "click",
-            async () => {
 
-                const description =
-                    descriptionInput.value.trim();
+<!-- =========================
+     JAVASCRIPT
+========================== -->
 
-                const duration =
-                    Number(durationInput.value);
+<script src="config.js"></script>
+<script src="api.js"></script>
 
 
-                if (!description) {
+<script>
 
-                    videoStatus.textContent =
-                        "Please describe the video we want to create.";
+    /*
+     * ==========================================
+     * VIDEO GENERATOR
+     * ==========================================
+     */
 
-                    return;
-                }
+
+    const descriptionInput =
+        document.getElementById(
+            "video-description"
+        );
 
 
-                generateButton.disabled = true;
+    const durationInput =
+        document.getElementById(
+            "video-duration"
+        );
 
-                videoResult.style.display = "none";
+
+    const generateButton =
+        document.getElementById(
+            "generate-video-button"
+        );
+
+
+    const videoStatus =
+        document.getElementById(
+            "video-status"
+        );
+
+
+    const videoResult =
+        document.getElementById(
+            "video-result"
+        );
+
+
+    const generatedVideo =
+        document.getElementById(
+            "generated-video"
+        );
+
+
+    const downloadVideo =
+        document.getElementById(
+            "download-video"
+        );
+
+
+
+    generateButton.addEventListener(
+        "click",
+        async function () {
+
+            const description =
+                descriptionInput.value.trim();
+
+
+            const duration =
+                Number(
+                    durationInput.value
+                );
+
+
+            if (!description) {
 
                 videoStatus.textContent =
-                    "⏳ Creating our video... This may take a while.";
+                    "⚠️ Please describe the video we want to create.";
+
+                descriptionInput.focus();
+
+                return;
+            }
 
 
-                try {
+            generateButton.disabled = true;
 
-                    const response = await fetch(
+
+            videoResult.style.display =
+                "none";
+
+
+            generatedVideo.removeAttribute(
+                "src"
+            );
+
+
+            videoStatus.textContent =
+                "⏳ Creating our video... This can take a while.";
+
+
+            try {
+
+                const response =
+                    await fetch(
                         `${API_BASE_URL}/api/generate-video`,
                         {
                             method: "POST",
@@ -202,242 +341,365 @@
                                     "application/json"
                             },
 
-                            body: JSON.stringify({
-                                description: description,
-                                duration: duration
-                            })
+                            body:
+                                JSON.stringify({
+                                    description:
+                                        description,
+
+                                    duration:
+                                        duration
+                                })
                         }
                     );
 
 
-                    const data =
-                        await response.json();
-
-
-                    if (!response.ok) {
-
-                        throw new Error(
-                            data.error ||
-                            "Video generation failed."
-                        );
-
-                    }
-
-
-                    const videoUrl =
-                        `${API_BASE_URL}${data.download_url}`;
-
-
-                    generatedVideo.src =
-                        videoUrl;
-
-
-                    downloadVideo.href =
-                        videoUrl;
-
-
-                    downloadVideo.download =
-                        data.filename ||
-                        "video.mp4";
-
-
-                    videoResult.style.display =
-                        "block";
-
-
-                    videoStatus.textContent =
-                        "✅ Our video is ready!";
-
-
-                } catch (error) {
-
-                    videoStatus.textContent =
-                        "❌ Error: " +
-                        error.message;
-
-                } finally {
-
-                    generateButton.disabled =
-                        false;
-
-                }
-
-            }
-        );
-
-
-        // ==========================================
-        // CHAT
-        // ==========================================
-
-        const log =
-            document.getElementById("chat-log");
-
-        const form =
-            document.getElementById("chat-form");
-
-        const input =
-            document.getElementById("chat-input");
-
-        let assistantName =
-            "Video Generator";
-
-
-        function addMessage(
-            role,
-            name,
-            text
-        ) {
-
-            const div =
-                document.createElement("div");
-
-            div.className =
-                "msg " + role;
-
-            div.innerHTML =
-                "<strong>" +
-                name +
-                ":</strong> <span></span>";
-
-            div.querySelector("span")
-                .textContent = text;
-
-            log.appendChild(div);
-
-            log.scrollTop =
-                log.scrollHeight;
-
-        }
-
-
-        document
-            .getElementById("logout-link")
-            .addEventListener(
-                "click",
-                () => api.logout()
-            );
-
-
-        form.addEventListener(
-            "submit",
-            async (e) => {
-
-                e.preventDefault();
-
-
-                const text =
-                    input.value.trim();
-
-
-                if (!text) return;
-
-
-                addMessage(
-                    "user",
-                    "You",
-                    text
-                );
-
-
-                input.value = "";
+                let data;
 
 
                 try {
 
-                    const data =
-                        await api.sendMessage(text);
+                    data =
+                        await response.json();
 
+                } catch (jsonError) {
 
-                    addMessage(
-                        "assistant",
-                        assistantName,
-                        data.reply
-                    );
-
-
-                } catch (err) {
-
-                    addMessage(
-                        "assistant",
-                        assistantName,
-                        "Error: " +
-                        err.message
+                    throw new Error(
+                        "The backend returned an invalid response."
                     );
 
                 }
 
-            }
-        );
 
+                if (!response.ok) {
 
-        // ==========================================
-        // LOAD SESSION + CHAT HISTORY
-        // ==========================================
+                    throw new Error(
+                        data.error ||
+                        "Video generation failed."
+                    );
 
-        (async () => {
-
-            try {
-
-                const {
-                    auth_required
-                } = await api.session();
+                }
 
 
                 if (
-                    auth_required &&
-                    !localStorage.getItem(
-                        "personal_ai_token"
-                    )
+                    !data.download_url
                 ) {
 
-                    window.location.href =
-                        "login.html";
-
-                    return;
-
-                }
-
-
-                try {
-
-                    const history =
-                        await api.history();
-
-
-                    for (
-                        const msg of history
-                    ) {
-
-                        addMessage(
-                            msg.role,
-                            msg.role === "user"
-                                ? "You"
-                                : assistantName,
-                            msg.content
-                        );
-
-                    }
-
-                } catch (err) {
-
-                    console.log(
-                        "History could not be loaded."
+                    throw new Error(
+                        "The backend did not return a video URL."
                     );
 
                 }
 
-            } catch (err) {
 
-                console.log(
-                    "Session check failed."
+                const videoUrl =
+                    `${API_BASE_URL}${data.download_url}`;
+
+
+                generatedVideo.src =
+                    videoUrl;
+
+
+                downloadVideo.href =
+                    videoUrl;
+
+
+                downloadVideo.download =
+                    data.filename ||
+                    "video.mp4";
+
+
+                videoResult.style.display =
+                    "block";
+
+
+                videoStatus.textContent =
+                    "✅ Our video is ready!";
+
+
+            } catch (error) {
+
+                console.error(
+                    "Video generation error:",
+                    error
+                );
+
+
+                videoStatus.textContent =
+                    "❌ Error: " +
+                    error.message;
+
+
+            } finally {
+
+                generateButton.disabled =
+                    false;
+
+            }
+
+        }
+    );
+
+
+
+    /*
+     * ==========================================
+     * LOCAL CHAT ASSISTANT
+     * ==========================================
+     */
+
+
+    const log =
+        document.getElementById(
+            "chat-log"
+        );
+
+
+    const form =
+        document.getElementById(
+            "chat-form"
+        );
+
+
+    const input =
+        document.getElementById(
+            "chat-input"
+        );
+
+
+    let assistantName =
+        "Video Generator";
+
+
+
+    function addMessage(
+        role,
+        name,
+        text
+    ) {
+
+        const div =
+            document.createElement(
+                "div"
+            );
+
+
+        div.className =
+            "msg " + role;
+
+
+        const strong =
+            document.createElement(
+                "strong"
+            );
+
+
+        strong.textContent =
+            name + ": ";
+
+
+        const span =
+            document.createElement(
+                "span"
+            );
+
+
+        span.textContent =
+            text;
+
+
+        div.appendChild(
+            strong
+        );
+
+
+        div.appendChild(
+            span
+        );
+
+
+        log.appendChild(
+            div
+        );
+
+
+        log.scrollTop =
+            log.scrollHeight;
+
+    }
+
+
+
+    /*
+     * LOGOUT
+     */
+
+    const logoutLink =
+        document.getElementById(
+            "logout-link"
+        );
+
+
+    if (
+        logoutLink &&
+        typeof api.logout === "function"
+    ) {
+
+        logoutLink.addEventListener(
+            "click",
+            function (event) {
+
+                event.preventDefault();
+
+                api.logout();
+
+            }
+        );
+
+    }
+
+
+
+    /*
+     * CHAT
+     */
+
+    form.addEventListener(
+        "submit",
+        async function (event) {
+
+            event.preventDefault();
+
+
+            const text =
+                input.value.trim();
+
+
+            if (!text) {
+                return;
+            }
+
+
+            addMessage(
+                "user",
+                "You",
+                text
+            );
+
+
+            input.value = "";
+
+
+            try {
+
+                const data =
+                    await api.sendMessage(
+                        text
+                    );
+
+
+                addMessage(
+                    "assistant",
+                    assistantName,
+                    data.reply
+                );
+
+
+            } catch (error) {
+
+                addMessage(
+                    "assistant",
+                    assistantName,
+                    "Error: " +
+                    error.message
                 );
 
             }
 
-        })();
+        }
+    );
 
-    </script>
+
+
+    /*
+     * ==========================================
+     * STARTUP
+     * ==========================================
+     */
+
+    (async function () {
+
+        try {
+
+            const session =
+                await api.session();
+
+
+            /*
+             * If authentication is enabled,
+             * check the token used by api.js.
+             */
+
+            if (
+                session.auth_required &&
+                !localStorage.getItem(
+                    "video_generator_token"
+                )
+            ) {
+
+                window.location.href =
+                    "login.html";
+
+                return;
+
+            }
+
+
+            /*
+             * Load previous chat history.
+             */
+
+            try {
+
+                const history =
+                    await api.history();
+
+
+                for (
+                    const message of history
+                ) {
+
+                    addMessage(
+                        message.role,
+                        message.role === "user"
+                            ? "You"
+                            : assistantName,
+                        message.content
+                    );
+
+                }
+
+            } catch (historyError) {
+
+                console.log(
+                    "Chat history could not be loaded."
+                );
+
+            }
+
+        } catch (error) {
+
+            console.log(
+                "Session check failed."
+            );
+
+        }
+
+    })();
+
+</script>
+```
 
 </body>
+
 </html>
+
