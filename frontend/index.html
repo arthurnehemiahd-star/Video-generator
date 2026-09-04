@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -134,6 +135,7 @@
       margin-top: 18px;
       color: #aaa;
       min-height: 24px;
+      white-space: pre-wrap;
     }
 
     #video-result {
@@ -343,10 +345,18 @@
 </main>
 
 
+<!-- Backend configuration -->
 <script src="config.js"></script>
+
+<!-- Backend API -->
 <script src="api.js"></script>
 
+
 <script>
+
+  // ==========================================================
+  // VIDEO GENERATOR
+  // ==========================================================
 
   const generateButton =
     document.getElementById("generate-video-button");
@@ -378,85 +388,91 @@
     const duration =
       Number(durationInput.value);
 
+
     if (!description) {
+
       statusBox.textContent =
         "Please describe the video first.";
+
       return;
     }
+
 
     generateButton.disabled = true;
 
     resultBox.style.display = "none";
 
     statusBox.textContent =
-      "🎬 Creating the video... This may take a while.";
+      "🎬 Creating the video...\nThis may take a while.";
+
 
     try {
 
-      const response = await fetch(
-        `${API_BASE_URL}/api/generate-video`,
-        {
-          method: "POST",
+      // IMPORTANT:
+      // Use api.js instead of making another fetch request.
+      const data =
+        await api.generateVideo(
+          description,
+          duration
+        );
 
-          headers: {
-            "Content-Type": "application/json"
-          },
 
-          body: JSON.stringify({
-            description,
-            duration
-          })
-        }
-      );
+      if (!data.success) {
 
-      const rawResponse = await response.text();
-
-console.log("STATUS:", response.status);
-console.log("RESPONSE:", rawResponse);
-
-let data;
-
-try {
-  data = JSON.parse(rawResponse);
-} catch (error) {
-  throw new Error(
-    `Backend returned non-JSON (${response.status}): ${rawResponse.slice(0, 300)}`
-  );
-}
-
-      if (!response.ok || !data.success) {
         throw new Error(
-          data.error || "Video generation failed."
+          data.error ||
+          "Video generation failed."
         );
       }
+
 
       const videoUrl =
         `${API_BASE_URL}${data.download_url}`;
 
-      generatedVideo.src = videoUrl;
 
-      downloadVideo.href = videoUrl;
+      generatedVideo.src =
+        videoUrl;
 
-      resultBox.style.display = "block";
+      downloadVideo.href =
+        api.downloadUrl(
+          data.project,
+          data.filename
+        );
+
+
+      resultBox.style.display =
+        "block";
+
 
       statusBox.textContent =
         "✅ Video created successfully!";
 
+
     } catch (error) {
 
-      console.error(error);
+      console.error(
+        "VIDEO GENERATION ERROR:",
+        error
+      );
+
 
       statusBox.textContent =
         "❌ " + error.message;
 
+
     } finally {
 
-      generateButton.disabled = false;
+      generateButton.disabled =
+        false;
 
     }
 
   });
 
+
+  // ==========================================================
+  // CHAT
+  // ==========================================================
 
   const chatInput =
     document.getElementById("chat-input");
@@ -473,20 +489,30 @@ try {
     const message =
       chatInput.value.trim();
 
-    if (!message) return;
+
+    if (!message) {
+      return;
+    }
+
 
     chatHistory.textContent +=
       `You: ${message}\n`;
 
+
     chatInput.value = "";
+
 
     try {
 
       const result =
-        await api.sendMessage(message);
+        await api.sendMessage(
+          message
+        );
+
 
       chatHistory.textContent +=
         `Assistant: ${result.reply}\n\n`;
+
 
     } catch (error) {
 
@@ -509,7 +535,9 @@ try {
     (event) => {
 
       if (event.key === "Enter") {
+
         sendChat();
+
       }
 
     }
@@ -519,3 +547,4 @@ try {
 
 </body>
 </html>
+```
