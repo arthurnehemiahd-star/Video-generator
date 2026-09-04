@@ -1,4 +1,4 @@
-```javascript
+javascript
 // api.js
 // All frontend communication with the backend goes through this file.
 
@@ -239,4 +239,4 @@ const api = {
 // ============================================================
 
 window.api = api;
-```
+
