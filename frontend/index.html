@@ -1,121 +1,508 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <title>Video Generator</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>AI Video Generator</title>
+
+  <link rel="icon" href="favicon.svg">
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #111318;
+      color: white;
+    }
+
+    header {
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 30px;
+      border-bottom: 1px solid #292d35;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 25px;
+      font-weight: bold;
+    }
+
+    .logo-icon {
+      width: 54px;
+      height: 54px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #24b6ff, #3178ff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+    }
+
+    header a {
+      color: #aaa;
+      text-decoration: none;
+      font-size: 17px;
+    }
+
+    main {
+      width: min(1000px, 92%);
+      margin: 40px auto;
+    }
+
+    .video-generator {
+      background: #1a1d23;
+      border: 1px solid #2c3038;
+      border-radius: 18px;
+      padding: 30px;
+      box-shadow: 0 10px 40px rgba(0,0,0,.25);
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 34px;
+    }
+
+    .subtitle {
+      color: #9da3ad;
+      margin-bottom: 25px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+
+    textarea,
+    select {
+      width: 100%;
+      background: #111318;
+      color: white;
+      border: 1px solid #343943;
+      border-radius: 10px;
+      padding: 15px;
+      font-size: 16px;
+      outline: none;
+    }
+
+    textarea {
+      min-height: 130px;
+      resize: vertical;
+    }
+
+    textarea:focus,
+    select:focus {
+      border-color: #4c8dff;
+    }
+
+    .field {
+      margin-bottom: 22px;
+    }
+
+    .generate-button {
+      width: 100%;
+      border: none;
+      border-radius: 10px;
+      padding: 16px;
+      font-size: 18px;
+      font-weight: bold;
+      color: white;
+      background: linear-gradient(135deg, #287cff, #6b5cff);
+      cursor: pointer;
+    }
+
+    .generate-button:hover {
+      opacity: .9;
+    }
+
+    .generate-button:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    #video-status {
+      margin-top: 18px;
+      color: #aaa;
+      min-height: 24px;
+    }
+
+    #video-result {
+      display: none;
+      margin-top: 30px;
+    }
+
+    #generated-video {
+      width: 100%;
+      border-radius: 12px;
+      background: black;
+    }
+
+    .download-button {
+      display: inline-block;
+      margin-top: 15px;
+      padding: 13px 20px;
+      background: #242932;
+      color: white;
+      text-decoration: none;
+      border-radius: 9px;
+    }
+
+    .chat {
+      margin-top: 35px;
+      background: #1a1d23;
+      border: 1px solid #2c3038;
+      border-radius: 18px;
+      padding: 25px;
+    }
+
+    .chat h2 {
+      margin-top: 0;
+    }
+
+    #chat-history {
+      min-height: 80px;
+      margin-bottom: 15px;
+      color: #c8ccd3;
+      white-space: pre-wrap;
+    }
+
+    .chat-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    #chat-input {
+      flex: 1;
+      background: #111318;
+      color: white;
+      border: 1px solid #343943;
+      border-radius: 9px;
+      padding: 14px;
+    }
+
+    #send-button {
+      border: none;
+      border-radius: 9px;
+      padding: 0 22px;
+      background: #4385ff;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .hint {
+      color: #777d87;
+      margin-top: 12px;
+      font-size: 14px;
+    }
+
+    @media (max-width: 600px) {
+      header {
+        padding: 0 15px;
+      }
+
+      main {
+        width: 94%;
+        margin-top: 20px;
+      }
+
+      .video-generator,
+      .chat {
+        padding: 20px;
+      }
+
+      .chat-row {
+        flex-direction: column;
+      }
+
+      #send-button {
+        padding: 14px;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
-    <nav>
-        <div class="brand">
-    <div class="logo-mark">▶</div>
+<header>
+  <div class="logo">
+    <div class="logo-icon">▶</div>
     <span>Video Generator</span>
-</div>
-        <a href="projects.html">Projects</a>
-    </nav>
+  </div>
 
-    <main>
-        <div id="chat-log"></div>
+  <a href="#">Projects</a>
+</header>
 
-        <form id="chat-form">
-            <input
-                type="text"
-                id="chat-input"
-                placeholder="Message, or a /command like /help"
-                autocomplete="off"
-                autofocus
-            >
+<main>
 
-            <button type="submit">Send</button>
-        </form>
+  <section class="video-generator">
 
-        <p class="hint">
-            Try
-            <code>/help</code>,
-            <code>/trailer &lt;project&gt; | &lt;idea&gt;</code>,
-            <code>/musicvideo &lt;project&gt; | &lt;theme&gt;</code>,
-            <code>/file list</code>,
-            <code>/open list</code>
-        </p>
-    </main>
+    <h1>🎬 AI Video Generator</h1>
 
-    <script src="config.js"></script>
-    <script src="api.js"></script>
+    <p class="subtitle">
+      Describe the video we want to create. Our AI will turn the idea into scenes and generate the video.
+    </p>
 
-    <script>
-        const log = document.getElementById("chat-log");
-        const form = document.getElementById("chat-form");
-        const input = document.getElementById("chat-input");
+    <div class="field">
+      <label for="video-description">
+        What video do we want to create?
+      </label>
 
-        const assistantName = "Video Generator";
+      <textarea
+        id="video-description"
+        placeholder="Example: A cinematic video about a student discovering a secret room at school..."
+      ></textarea>
+    </div>
 
-        function addMessage(role, name, text) {
-            const div = document.createElement("div");
+    <div class="field">
+      <label for="video-duration">
+        Video duration
+      </label>
 
-            div.className = "msg " + role;
+      <select id="video-duration">
+        <option value="10">10 seconds</option>
+        <option value="15">15 seconds</option>
+        <option value="30">30 seconds</option>
+        <option value="45">45 seconds</option>
+        <option value="60">1 minute</option>
+        <option value="90">1 minute 30 seconds</option>
+        <option value="120">2 minutes</option>
+      </select>
+    </div>
 
-            div.innerHTML =
-                "<strong>" + name + ":</strong> <span></span>";
+    <button
+      id="generate-video-button"
+      class="generate-button"
+    >
+      🎬 Generate Video
+    </button>
 
-            div.querySelector("span").textContent = text;
+    <div id="video-status"></div>
 
-            log.appendChild(div);
-            log.scrollTop = log.scrollHeight;
+    <div id="video-result">
+
+      <h2>Your video</h2>
+
+      <video
+        id="generated-video"
+        controls
+      ></video>
+
+      <br>
+
+      <a
+        id="download-video"
+        class="download-button"
+        href="#"
+        target="_blank"
+      >
+        ⬇ Download Video
+      </a>
+
+    </div>
+
+  </section>
+
+
+  <section class="chat">
+
+    <h2>💬 Assistant</h2>
+
+    <div id="chat-history"></div>
+
+    <div class="chat-row">
+
+      <input
+        id="chat-input"
+        type="text"
+        placeholder="Message the assistant..."
+      >
+
+      <button id="send-button">
+        Send
+      </button>
+
+    </div>
+
+    <div class="hint">
+      We can use the assistant to help with the project.
+    </div>
+
+  </section>
+
+</main>
+
+
+<script src="config.js"></script>
+<script src="api.js"></script>
+
+<script>
+
+  const generateButton =
+    document.getElementById("generate-video-button");
+
+  const descriptionInput =
+    document.getElementById("video-description");
+
+  const durationInput =
+    document.getElementById("video-duration");
+
+  const statusBox =
+    document.getElementById("video-status");
+
+  const resultBox =
+    document.getElementById("video-result");
+
+  const generatedVideo =
+    document.getElementById("generated-video");
+
+  const downloadVideo =
+    document.getElementById("download-video");
+
+
+  generateButton.addEventListener("click", async () => {
+
+    const description =
+      descriptionInput.value.trim();
+
+    const duration =
+      Number(durationInput.value);
+
+    if (!description) {
+      statusBox.textContent =
+        "Please describe the video first.";
+      return;
+    }
+
+    generateButton.disabled = true;
+
+    resultBox.style.display = "none";
+
+    statusBox.textContent =
+      "🎬 Creating the video... This may take a while.";
+
+    try {
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/generate-video`,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json"
+          },
+
+          body: JSON.stringify({
+            description,
+            duration
+          })
         }
+      );
 
-        form.addEventListener("submit", async (e) => {
-            e.preventDefault();
+      const data = await response.json();
 
-            const text = input.value.trim();
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.error || "Video generation failed."
+        );
+      }
 
-            if (!text) return;
+      const videoUrl =
+        `${API_BASE_URL}${data.download_url}`;
 
-            addMessage("user", "You", text);
+      generatedVideo.src = videoUrl;
 
-            input.value = "";
-            input.focus();
+      downloadVideo.href = videoUrl;
 
-            try {
-                const data = await api.sendMessage(text);
+      resultBox.style.display = "block";
 
-                addMessage(
-                    "assistant",
-                    assistantName,
-                    data.reply
-                );
+      statusBox.textContent =
+        "✅ Video created successfully!";
 
-            } catch (err) {
-                addMessage(
-                    "assistant",
-                    assistantName,
-                    "Error: " + err.message
-                );
-            }
-        });
+    } catch (error) {
 
-        // Load previous conversation
-        (async () => {
-            try {
-                const history = await api.history();
+      console.error(error);
 
-                for (const msg of history) {
-                    addMessage(
-                        msg.role,
-                        msg.role === "user"
-                            ? "You"
-                            : assistantName,
-                        msg.content
-                    );
-                }
+      statusBox.textContent =
+        "❌ " + error.message;
 
-            } catch (err) {
-                console.log("History could not be loaded:", err.message);
-            }
-        })();
-    </script>
+    } finally {
+
+      generateButton.disabled = false;
+
+    }
+
+  });
+
+
+  const chatInput =
+    document.getElementById("chat-input");
+
+  const sendButton =
+    document.getElementById("send-button");
+
+  const chatHistory =
+    document.getElementById("chat-history");
+
+
+  async function sendChat() {
+
+    const message =
+      chatInput.value.trim();
+
+    if (!message) return;
+
+    chatHistory.textContent +=
+      `You: ${message}\n`;
+
+    chatInput.value = "";
+
+    try {
+
+      const result =
+        await api.sendMessage(message);
+
+      chatHistory.textContent +=
+        `Assistant: ${result.reply}\n\n`;
+
+    } catch (error) {
+
+      chatHistory.textContent +=
+        `Error: ${error.message}\n\n`;
+
+    }
+
+  }
+
+
+  sendButton.addEventListener(
+    "click",
+    sendChat
+  );
+
+
+  chatInput.addEventListener(
+    "keydown",
+    (event) => {
+
+      if (event.key === "Enter") {
+        sendChat();
+      }
+
+    }
+  );
+
+</script>
 
 </body>
 </html>
