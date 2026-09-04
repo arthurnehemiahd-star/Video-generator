@@ -1,7 +1,3 @@
-/* api.js
-All frontend communication with the backend goes through this file.
-*/
-
 const TOKEN_KEY = "video_generator_token";
 
 function getToken() {
@@ -29,7 +25,7 @@ if (token) {
     headers["Authorization"] = `Bearer ${token}`;
 }
 
-const res = await fetch(
+const response = await fetch(
     `${API_BASE_URL}${path}`,
     {
         ...options,
@@ -37,12 +33,11 @@ const res = await fetch(
     }
 );
 
-if (res.status === 401) {
+if (response.status === 401) {
     setToken(null);
-    throw new Error("Unauthorized");
 }
 
-return res;
+return response;
 ```
 
 }
@@ -51,35 +46,28 @@ const api = {
 
 ```
 async session() {
-    const res = await apiFetch("/api/session");
-    const data = await res.json();
+    const response = await apiFetch("/api/session");
+    const data = await response.json();
 
-    if (!res.ok) {
-        throw new Error(
-            data.error || "Could not check session"
-        );
+    if (!response.ok) {
+        throw new Error(data.error || "Session check failed");
     }
 
     return data;
 },
 
 async login(password) {
-    const res = await apiFetch(
-        "/api/login",
-        {
-            method: "POST",
-            body: JSON.stringify({
-                password: password
-            })
-        }
-    );
+    const response = await apiFetch("/api/login", {
+        method: "POST",
+        body: JSON.stringify({
+            password: password
+        })
+    });
 
-    const data = await res.json();
+    const data = await response.json();
 
-    if (!res.ok) {
-        throw new Error(
-            data.error || "Login failed"
-        );
+    if (!response.ok) {
+        throw new Error(data.error || "Login failed");
     }
 
     if (data.token) {
@@ -90,68 +78,56 @@ async login(password) {
 },
 
 async sendMessage(text) {
-    const res = await apiFetch(
-        "/api/message",
-        {
-            method: "POST",
-            body: JSON.stringify({
-                text: text
-            })
-        }
-    );
+    const response = await apiFetch("/api/message", {
+        method: "POST",
+        body: JSON.stringify({
+            text: text
+        })
+    });
 
-    const data = await res.json();
+    const data = await response.json();
 
-    if (!res.ok) {
-        throw new Error(
-            data.error || "Request failed"
-        );
+    if (!response.ok) {
+        throw new Error(data.error || "Message failed");
     }
 
     return data;
 },
 
 async history() {
-    const res = await apiFetch("/api/history");
-    const data = await res.json();
+    const response = await apiFetch("/api/history");
+    const data = await response.json();
 
-    if (!res.ok) {
-        throw new Error(
-            data.error || "Could not load history"
-        );
+    if (!response.ok) {
+        throw new Error(data.error || "Could not load history");
     }
 
     return data.history || [];
 },
 
 async projects() {
-    const res = await apiFetch("/api/projects");
-    const data = await res.json();
+    const response = await apiFetch("/api/projects");
+    const data = await response.json();
 
-    if (!res.ok) {
-        throw new Error(
-            data.error || "Could not load projects"
-        );
+    if (!response.ok) {
+        throw new Error(data.error || "Could not load projects");
     }
 
     return data.projects || [];
 },
 
 async generateVideo(description, duration) {
-    const res = await apiFetch(
-        "/api/generate-video",
-        {
-            method: "POST",
-            body: JSON.stringify({
-                description: description,
-                duration: duration
-            })
-        }
-    );
+    const response = await apiFetch("/api/generate-video", {
+        method: "POST",
+        body: JSON.stringify({
+            description: description,
+            duration: duration
+        })
+    });
 
-    const data = await res.json();
+    const data = await response.json();
 
-    if (!res.ok) {
+    if (!response.ok) {
         throw new Error(
             data.error || "Video generation failed"
         );
@@ -163,16 +139,16 @@ async generateVideo(description, duration) {
 downloadUrl(project, filename) {
     const token = getToken();
 
-    const suffix = token
-        ? `?token=${encodeURIComponent(token)}`
-        : "";
-
-    return (
+    let url =
         `${API_BASE_URL}/api/download/` +
         `${encodeURIComponent(project)}/` +
-        `${encodeURIComponent(filename)}` +
-        suffix
-    );
+        `${encodeURIComponent(filename)}`;
+
+    if (token) {
+        url += `?token=${encodeURIComponent(token)}`;
+    }
+
+    return url;
 }
 ```
 
