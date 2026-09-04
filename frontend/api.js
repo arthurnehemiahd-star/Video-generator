@@ -1,3 +1,4 @@
+```javascript
 // api.js
 // All frontend communication with the backend goes through this file.
 
@@ -46,10 +47,29 @@ async function apiFetch(path, options = {}) {
 
 const api = {
 
+    // ========================================================
+    // SESSION
+    // ========================================================
+
     async session() {
+
         const res = await apiFetch("/api/session");
-        return res.json();
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            throw new Error(
+                data.error || "Could not check session"
+            );
+        }
+
+        return data;
     },
+
+
+    // ========================================================
+    // LOGIN
+    // ========================================================
 
     async login(password) {
 
@@ -76,6 +96,11 @@ const api = {
         return data;
     },
 
+
+    // ========================================================
+    // CHAT
+    // ========================================================
+
     async sendMessage(text) {
 
         const res = await apiFetch("/api/message", {
@@ -97,6 +122,11 @@ const api = {
         return data;
     },
 
+
+    // ========================================================
+    // CHAT HISTORY
+    // ========================================================
+
     async history() {
 
         const res = await apiFetch("/api/history");
@@ -112,6 +142,11 @@ const api = {
         return data.history || [];
     },
 
+
+    // ========================================================
+    // PROJECTS
+    // ========================================================
+
     async projects() {
 
         const res = await apiFetch("/api/projects");
@@ -126,6 +161,41 @@ const api = {
 
         return data.projects || [];
     },
+
+
+    // ========================================================
+    // VIDEO GENERATOR
+    // ========================================================
+
+    async generateVideo(description, duration) {
+
+        const res = await apiFetch(
+            "/api/generate-video",
+            {
+                method: "POST",
+
+                body: JSON.stringify({
+                    description: description,
+                    duration: duration
+                })
+            }
+        );
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            throw new Error(
+                data.error || "Video generation failed"
+            );
+        }
+
+        return data;
+    },
+
+
+    // ========================================================
+    // DOWNLOAD
+    // ========================================================
 
     downloadUrl(project, filename) {
 
@@ -143,3 +213,4 @@ const api = {
         );
     }
 };
+```
