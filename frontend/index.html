@@ -1,549 +1,261 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>AI Video Generator</title>
+```
+<title>Video Generator</title>
 
-  <link rel="icon" href="favicon.svg">
+<link rel="stylesheet" href="style.css">
 
-  <style>
-    * {
-      box-sizing: border-box;
-    }
+<!-- Backend configuration MUST load first -->
+<script src="config.js"></script>
 
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #111318;
-      color: white;
-    }
+<!-- API functions -->
+<script src="api.js"></script>
+```
 
-    header {
-      height: 80px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 30px;
-      border-bottom: 1px solid #292d35;
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      font-size: 25px;
-      font-weight: bold;
-    }
-
-    .logo-icon {
-      width: 54px;
-      height: 54px;
-      border-radius: 14px;
-      background: linear-gradient(135deg, #24b6ff, #3178ff);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 28px;
-    }
-
-    header a {
-      color: #aaa;
-      text-decoration: none;
-      font-size: 17px;
-    }
-
-    main {
-      width: min(1000px, 92%);
-      margin: 40px auto;
-    }
-
-    .video-generator {
-      background: #1a1d23;
-      border: 1px solid #2c3038;
-      border-radius: 18px;
-      padding: 30px;
-      box-shadow: 0 10px 40px rgba(0,0,0,.25);
-    }
-
-    h1 {
-      margin-top: 0;
-      font-size: 34px;
-    }
-
-    .subtitle {
-      color: #9da3ad;
-      margin-bottom: 25px;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 10px;
-      font-weight: bold;
-    }
-
-    textarea,
-    select {
-      width: 100%;
-      background: #111318;
-      color: white;
-      border: 1px solid #343943;
-      border-radius: 10px;
-      padding: 15px;
-      font-size: 16px;
-      outline: none;
-    }
-
-    textarea {
-      min-height: 130px;
-      resize: vertical;
-    }
-
-    textarea:focus,
-    select:focus {
-      border-color: #4c8dff;
-    }
-
-    .field {
-      margin-bottom: 22px;
-    }
-
-    .generate-button {
-      width: 100%;
-      border: none;
-      border-radius: 10px;
-      padding: 16px;
-      font-size: 18px;
-      font-weight: bold;
-      color: white;
-      background: linear-gradient(135deg, #287cff, #6b5cff);
-      cursor: pointer;
-    }
-
-    .generate-button:hover {
-      opacity: .9;
-    }
-
-    .generate-button:disabled {
-      opacity: .5;
-      cursor: not-allowed;
-    }
-
-    #video-status {
-      margin-top: 18px;
-      color: #aaa;
-      min-height: 24px;
-      white-space: pre-wrap;
-    }
-
-    #video-result {
-      display: none;
-      margin-top: 30px;
-    }
-
-    #generated-video {
-      width: 100%;
-      border-radius: 12px;
-      background: black;
-    }
-
-    .download-button {
-      display: inline-block;
-      margin-top: 15px;
-      padding: 13px 20px;
-      background: #242932;
-      color: white;
-      text-decoration: none;
-      border-radius: 9px;
-    }
-
-    .chat {
-      margin-top: 35px;
-      background: #1a1d23;
-      border: 1px solid #2c3038;
-      border-radius: 18px;
-      padding: 25px;
-    }
-
-    .chat h2 {
-      margin-top: 0;
-    }
-
-    #chat-history {
-      min-height: 80px;
-      margin-bottom: 15px;
-      color: #c8ccd3;
-      white-space: pre-wrap;
-    }
-
-    .chat-row {
-      display: flex;
-      gap: 10px;
-    }
-
-    #chat-input {
-      flex: 1;
-      background: #111318;
-      color: white;
-      border: 1px solid #343943;
-      border-radius: 9px;
-      padding: 14px;
-    }
-
-    #send-button {
-      border: none;
-      border-radius: 9px;
-      padding: 0 22px;
-      background: #4385ff;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    .hint {
-      color: #777d87;
-      margin-top: 12px;
-      font-size: 14px;
-    }
-
-    @media (max-width: 600px) {
-      header {
-        padding: 0 15px;
-      }
-
-      main {
-        width: 94%;
-        margin-top: 20px;
-      }
-
-      .video-generator,
-      .chat {
-        padding: 20px;
-      }
-
-      .chat-row {
-        flex-direction: column;
-      }
-
-      #send-button {
-        padding: 14px;
-      }
-    }
-  </style>
 </head>
 
 <body>
 
+```
 <header>
-  <div class="logo">
-    <div class="logo-icon">▶</div>
-    <span>Video Generator</span>
-  </div>
-
-  <a href="#">Projects</a>
+    <h1>🎬 Video Generator</h1>
+    <p>Create videos from your ideas.</p>
 </header>
 
 <main>
 
-  <section class="video-generator">
+    <section class="generator">
 
-    <h1>🎬 AI Video Generator</h1>
+        <h2>Create a Video</h2>
 
-    <p class="subtitle">
-      Describe the video we want to create. Our AI will turn the idea into scenes and generate the video.
-    </p>
+        <label for="description">
+            Describe your video
+        </label>
 
-    <div class="field">
-      <label for="video-description">
-        What video do we want to create?
-      </label>
+        <textarea
+            id="description"
+            placeholder="Example: A cinematic adventure through a futuristic city..."
+            rows="6"
+        ></textarea>
 
-      <textarea
-        id="video-description"
-        placeholder="Example: A cinematic video about a student discovering a secret room at school..."
-      ></textarea>
-    </div>
+        <label for="duration">
+            Duration (seconds)
+        </label>
 
-    <div class="field">
-      <label for="video-duration">
-        Video duration
-      </label>
+        <input
+            id="duration"
+            type="number"
+            min="5"
+            max="120"
+            value="30"
+        >
 
-      <select id="video-duration">
-        <option value="10">10 seconds</option>
-        <option value="15">15 seconds</option>
-        <option value="30">30 seconds</option>
-        <option value="45">45 seconds</option>
-        <option value="60">1 minute</option>
-        <option value="90">1 minute 30 seconds</option>
-        <option value="120">2 minutes</option>
-      </select>
-    </div>
+        <button id="generateBtn">
+            🎬 Generate Video
+        </button>
 
-    <button
-      id="generate-video-button"
-      class="generate-button"
-    >
-      🎬 Generate Video
-    </button>
+        <div id="status"></div>
 
-    <div id="video-status"></div>
+        <div id="result" style="display:none;">
 
-    <div id="video-result">
+            <h3>✅ Video Created!</h3>
 
-      <h2>Your video</h2>
+            <p id="projectName"></p>
 
-      <video
-        id="generated-video"
-        controls
-      ></video>
+            <a
+                id="downloadBtn"
+                href="#"
+                target="_blank"
+                rel="noopener"
+            >
+                ⬇️ Download Video
+            </a>
 
-      <br>
+        </div>
 
-      <a
-        id="download-video"
-        class="download-button"
-        href="#"
-        target="_blank"
-      >
-        ⬇ Download Video
-      </a>
-
-    </div>
-
-  </section>
-
-
-  <section class="chat">
-
-    <h2>💬 Assistant</h2>
-
-    <div id="chat-history"></div>
-
-    <div class="chat-row">
-
-      <input
-        id="chat-input"
-        type="text"
-        placeholder="Message the assistant..."
-      >
-
-      <button id="send-button">
-        Send
-      </button>
-
-    </div>
-
-    <div class="hint">
-      We can use the assistant to help with the project.
-    </div>
-
-  </section>
+    </section>
 
 </main>
 
-
-<!-- Backend configuration -->
-<script src="config.js"></script>
-
-<!-- Backend API -->
-<script src="api.js"></script>
-
-
 <script>
 
-  // ==========================================================
-  // VIDEO GENERATOR
-  // ==========================================================
+    // =====================================================
+    // Make sure API loaded
+    // =====================================================
 
-  const generateButton =
-    document.getElementById("generate-video-button");
+    if (!window.api) {
 
-  const descriptionInput =
-    document.getElementById("video-description");
+        console.error("api.js did not load.");
 
-  const durationInput =
-    document.getElementById("video-duration");
-
-  const statusBox =
-    document.getElementById("video-status");
-
-  const resultBox =
-    document.getElementById("video-result");
-
-  const generatedVideo =
-    document.getElementById("generated-video");
-
-  const downloadVideo =
-    document.getElementById("download-video");
-
-
-  generateButton.addEventListener("click", async () => {
-
-    const description =
-      descriptionInput.value.trim();
-
-    const duration =
-      Number(durationInput.value);
-
-
-    if (!description) {
-
-      statusBox.textContent =
-        "Please describe the video first.";
-
-      return;
-    }
-
-
-    generateButton.disabled = true;
-
-    resultBox.style.display = "none";
-
-    statusBox.textContent =
-      "🎬 Creating the video...\nThis may take a while.";
-
-
-    try {
-
-      // IMPORTANT:
-      // Use api.js instead of making another fetch request.
-      const data =
-        await api.generateVideo(
-          description,
-          duration
-        );
-
-
-      if (!data.success) {
-
-        throw new Error(
-          data.error ||
-          "Video generation failed."
-        );
-      }
-
-
-      const videoUrl =
-        `${API_BASE_URL}${data.download_url}`;
-
-
-      generatedVideo.src =
-        videoUrl;
-
-      downloadVideo.href =
-        api.downloadUrl(
-          data.project,
-          data.filename
-        );
-
-
-      resultBox.style.display =
-        "block";
-
-
-      statusBox.textContent =
-        "✅ Video created successfully!";
-
-
-    } catch (error) {
-
-      console.error(
-        "VIDEO GENERATION ERROR:",
-        error
-      );
-
-
-      statusBox.textContent =
-        "❌ " + error.message;
-
-
-    } finally {
-
-      generateButton.disabled =
-        false;
+        document.getElementById("status").textContent =
+            "❌ API failed to load. Check api.js.";
 
     }
 
-  });
+
+    // =====================================================
+    // Generate Video
+    // =====================================================
+
+    const generateBtn =
+        document.getElementById("generateBtn");
+
+    generateBtn.addEventListener(
+        "click",
+        async function () {
+
+            const description =
+                document
+                    .getElementById("description")
+                    .value
+                    .trim();
+
+            const duration =
+                Number(
+                    document
+                        .getElementById("duration")
+                        .value
+                );
+
+            const status =
+                document.getElementById("status");
+
+            const result =
+                document.getElementById("result");
+
+            const projectName =
+                document.getElementById("projectName");
+
+            const downloadBtn =
+                document.getElementById("downloadBtn");
 
 
-  // ==========================================================
-  // CHAT
-  // ==========================================================
+            // ---------------------------------------------
+            // Validation
+            // ---------------------------------------------
 
-  const chatInput =
-    document.getElementById("chat-input");
+            if (!description) {
 
-  const sendButton =
-    document.getElementById("send-button");
+                status.textContent =
+                    "❌ Please describe the video.";
 
-  const chatHistory =
-    document.getElementById("chat-history");
+                return;
+            }
 
+            if (
+                !duration ||
+                duration < 5 ||
+                duration > 120
+            ) {
 
-  async function sendChat() {
+                status.textContent =
+                    "❌ Duration must be between 5 and 120 seconds.";
 
-    const message =
-      chatInput.value.trim();
-
-
-    if (!message) {
-      return;
-    }
-
-
-    chatHistory.textContent +=
-      `You: ${message}\n`;
+                return;
+            }
 
 
-    chatInput.value = "";
+            // ---------------------------------------------
+            // Loading
+            // ---------------------------------------------
+
+            generateBtn.disabled = true;
+
+            generateBtn.textContent =
+                "⏳ Generating...";
+
+            status.textContent =
+                "🎬 Creating your video...";
+
+            result.style.display =
+                "none";
 
 
-    try {
+            try {
 
-      const result =
-        await api.sendMessage(
-          message
-        );
+                // -----------------------------------------
+                // Send request to backend
+                // -----------------------------------------
 
-
-      chatHistory.textContent +=
-        `Assistant: ${result.reply}\n\n`;
-
-
-    } catch (error) {
-
-      chatHistory.textContent +=
-        `Error: ${error.message}\n\n`;
-
-    }
-
-  }
+                const data =
+                    await window.api.generateVideo(
+                        description,
+                        duration
+                    );
 
 
-  sendButton.addEventListener(
-    "click",
-    sendChat
-  );
+                // -----------------------------------------
+                // Success
+                // -----------------------------------------
+
+                status.textContent =
+                    "✅ Video generated successfully!";
+
+                projectName.textContent =
+                    "Project: " +
+                    (
+                        data.project ||
+                        "Generated Video"
+                    );
 
 
-  chatInput.addEventListener(
-    "keydown",
-    (event) => {
+                if (
+                    data.project &&
+                    data.filename
+                ) {
 
-      if (event.key === "Enter") {
+                    downloadBtn.href =
+                        window.api.downloadUrl(
+                            data.project,
+                            data.filename
+                        );
 
-        sendChat();
+                    result.style.display =
+                        "block";
 
-      }
+                } else if (data.download_url) {
 
-    }
-  );
+                    downloadBtn.href =
+                        data.download_url;
+
+                    result.style.display =
+                        "block";
+                }
+
+
+            } catch (error) {
+
+                console.error(error);
+
+                status.textContent =
+                    "❌ " +
+                    (
+                        error.message ||
+                        "Something went wrong."
+                    );
+
+            }
+
+
+            // ---------------------------------------------
+            // Reset button
+            // ---------------------------------------------
+
+            generateBtn.disabled = false;
+
+            generateBtn.textContent =
+                "🎬 Generate Video";
+
+        }
+    );
 
 </script>
+```
 
 </body>
 </html>
-
