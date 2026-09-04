@@ -1,5 +1,6 @@
-javascript
+```text
 // api.js
+
 // All frontend communication with the backend goes through this file.
 
 const TOKEN_KEY = "video_generator_token";
