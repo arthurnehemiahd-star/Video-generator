@@ -2,18 +2,16 @@
 
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 ```
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Video Generator</title>
 
 <link rel="stylesheet" href="style.css">
 
-<!-- Backend configuration MUST load first -->
 <script src="config.js"></script>
-
-<!-- API functions -->
 <script src="api.js"></script>
 ```
 
@@ -39,8 +37,8 @@
 
         <textarea
             id="description"
-            placeholder="Example: A cinematic adventure through a futuristic city..."
             rows="6"
+            placeholder="Example: A cinematic adventure through a futuristic city..."
         ></textarea>
 
         <label for="duration">
@@ -61,7 +59,7 @@
 
         <div id="status"></div>
 
-        <div id="result" style="display:none;">
+        <div id="result" style="display: none;">
 
             <h3>✅ Video Created!</h3>
 
@@ -84,175 +82,116 @@
 
 <script>
 
-    // =====================================================
-    // Make sure API loaded
-    // =====================================================
+    const status = document.getElementById("status");
+    const generateBtn = document.getElementById("generateBtn");
+    const result = document.getElementById("result");
+    const projectName = document.getElementById("projectName");
+    const downloadBtn = document.getElementById("downloadBtn");
 
     if (!window.api) {
 
-        console.error("api.js did not load.");
-
-        document.getElementById("status").textContent =
+        status.textContent =
             "❌ API failed to load. Check api.js.";
+
+        generateBtn.disabled = true;
+
+    } else {
+
+        status.textContent =
+            "✅ API connected.";
 
     }
 
+    generateBtn.addEventListener("click", async function () {
 
-    // =====================================================
-    // Generate Video
-    // =====================================================
+        const description =
+            document
+                .getElementById("description")
+                .value
+                .trim();
 
-    const generateBtn =
-        document.getElementById("generateBtn");
-
-    generateBtn.addEventListener(
-        "click",
-        async function () {
-
-            const description =
+        const duration =
+            Number(
                 document
-                    .getElementById("description")
+                    .getElementById("duration")
                     .value
-                    .trim();
+            );
 
-            const duration =
-                Number(
-                    document
-                        .getElementById("duration")
-                        .value
-                );
-
-            const status =
-                document.getElementById("status");
-
-            const result =
-                document.getElementById("result");
-
-            const projectName =
-                document.getElementById("projectName");
-
-            const downloadBtn =
-                document.getElementById("downloadBtn");
-
-
-            // ---------------------------------------------
-            // Validation
-            // ---------------------------------------------
-
-            if (!description) {
-
-                status.textContent =
-                    "❌ Please describe the video.";
-
-                return;
-            }
-
-            if (
-                !duration ||
-                duration < 5 ||
-                duration > 120
-            ) {
-
-                status.textContent =
-                    "❌ Duration must be between 5 and 120 seconds.";
-
-                return;
-            }
-
-
-            // ---------------------------------------------
-            // Loading
-            // ---------------------------------------------
-
-            generateBtn.disabled = true;
-
-            generateBtn.textContent =
-                "⏳ Generating...";
+        if (!description) {
 
             status.textContent =
-                "🎬 Creating your video...";
+                "❌ Please describe the video.";
 
-            result.style.display =
-                "none";
+            return;
+        }
 
+        if (duration < 5 || duration > 120) {
 
-            try {
+            status.textContent =
+                "❌ Duration must be between 5 and 120 seconds.";
 
-                // -----------------------------------------
-                // Send request to backend
-                // -----------------------------------------
+            return;
+        }
 
-                const data =
-                    await window.api.generateVideo(
-                        description,
-                        duration
+        generateBtn.disabled = true;
+
+        generateBtn.textContent =
+            "⏳ Generating...";
+
+        status.textContent =
+            "🎬 Creating your video...";
+
+        result.style.display = "none";
+
+        try {
+
+            const data =
+                await window.api.generateVideo(
+                    description,
+                    duration
+                );
+
+            status.textContent =
+                "✅ Video generated successfully!";
+
+            projectName.textContent =
+                "Project: " +
+                (data.project || "Generated Video");
+
+            if (data.project && data.filename) {
+
+                downloadBtn.href =
+                    window.api.downloadUrl(
+                        data.project,
+                        data.filename
                     );
 
+                result.style.display = "block";
 
-                // -----------------------------------------
-                // Success
-                // -----------------------------------------
+            } else if (data.download_url) {
 
-                status.textContent =
-                    "✅ Video generated successfully!";
+                downloadBtn.href =
+                    data.download_url;
 
-                projectName.textContent =
-                    "Project: " +
-                    (
-                        data.project ||
-                        "Generated Video"
-                    );
-
-
-                if (
-                    data.project &&
-                    data.filename
-                ) {
-
-                    downloadBtn.href =
-                        window.api.downloadUrl(
-                            data.project,
-                            data.filename
-                        );
-
-                    result.style.display =
-                        "block";
-
-                } else if (data.download_url) {
-
-                    downloadBtn.href =
-                        data.download_url;
-
-                    result.style.display =
-                        "block";
-                }
-
-
-            } catch (error) {
-
-                console.error(error);
-
-                status.textContent =
-                    "❌ " +
-                    (
-                        error.message ||
-                        "Something went wrong."
-                    );
-
+                result.style.display = "block";
             }
 
+        } catch (error) {
 
-            // ---------------------------------------------
-            // Reset button
-            // ---------------------------------------------
+            console.error(error);
 
-            generateBtn.disabled = false;
-
-            generateBtn.textContent =
-                "🎬 Generate Video";
+            status.textContent =
+                "❌ " +
+                (error.message || "Something went wrong.");
 
         }
-    );
+
+        generateBtn.disabled = false;
+
+        generateBtn.textContent =
+            "🎬 Generate Video";
+
+    });
 
 </script>
 ```
