@@ -1,4 +1,4 @@
-```text
+text
 // api.js
 
 // All frontend communication with the backend goes through this file.
