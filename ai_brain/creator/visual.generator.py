@@ -2,41 +2,52 @@
 visual_generator.py
 -------------------
 
-Generates visual scenes from text prompts.
+Generates cinematic images from text prompts.
 
 Pipeline:
 
-    Text prompt
+    text prompt
         ↓
-    Hugging Face image generation
+    Hugging Face Inference Providers
         ↓
-    PNG image
+    generated image
         ↓
     FFmpeg
         ↓
-    Video scene
+    video scene
 
-This module is intentionally separate from ai_client.py:
+This module is separate from:
 
-    ai_client.py          = local chat assistant
-    visual_generator.py   = AI visual generation
-    ffmpeg_tools.py       = video assembly
+    ai_client.py
+        Local chat assistant
+
+    scene_planner.py
+        Creates the video scenes
+
+    ffmpeg_tools.py
+        Turns images into video and combines them
 """
 
 from pathlib import Path
 import os
 
-import requests
+
+try:
+    from huggingface_hub import InferenceClient
+except ImportError as exc:
+    raise ImportError(
+        "huggingface_hub is required for image generation. "
+        "Install it with: pip install huggingface_hub"
+    ) from exc
 
 
 # ---------------------------------------------------------------------------
-# Hugging Face
+# Configuration
 # ---------------------------------------------------------------------------
 
-HF_API_URL = (
-    "https://router.huggingface.co/hf-inference/models/"
-    "stabilityai/stable-diffusion-xl-base-1.0"
-)
+DEFAULT_MODEL = "black-forest-labs/FLUX.1-schnell"
+
+DEFAULT_PROVIDER = "auto"
 
 
 # ---------------------------------------------------------------------------
@@ -44,32 +55,81 @@ HF_API_URL = (
 # ---------------------------------------------------------------------------
 
 class VisualGenerationError(RuntimeError):
-    """Raised when an AI image cannot be generated."""
+    """Raised when an image cannot be generated."""
     pass
 
 
 # ---------------------------------------------------------------------------
-# Configuration
+# Hugging Face configuration
 # ---------------------------------------------------------------------------
 
 def _get_huggingface_token() -> str:
     """
-    Read the Hugging Face API token from the environment.
+    Get the Hugging Face token from the environment.
 
-    Required:
+    Required environment variable:
 
-        HF_TOKEN=your_hugging_face_token
+        HF_TOKEN
+
+    Example:
+
+        HF_TOKEN=hf_xxxxxxxxxxxxxxxxx
     """
 
     token = os.getenv("HF_TOKEN", "").strip()
 
     if not token:
         raise VisualGenerationError(
-            "HF_TOKEN is not configured.\n"
-            "Add your Hugging Face API token to the environment."
+            "HF_TOKEN is not configured.\n\n"
+            "Create a Hugging Face token with inference permissions "
+            "and add it to the environment as HF_TOKEN."
         )
 
     return token
+
+
+def _get_model() -> str:
+    """
+    Get the image-generation model.
+
+    Optional environment variable:
+
+        HF_IMAGE_MODEL
+
+    If it is not provided, FLUX.1-schnell is used.
+    """
+
+    model = os.getenv(
+        "HF_IMAGE_MODEL",
+        DEFAULT_MODEL,
+    ).strip()
+
+    return model or DEFAULT_MODEL
+
+
+# ---------------------------------------------------------------------------
+# Create Hugging Face client
+# ---------------------------------------------------------------------------
+
+def _get_client() -> InferenceClient:
+    """
+    Create the Hugging Face InferenceClient.
+    """
+
+    token = _get_huggingface_token()
+
+    try:
+        client = InferenceClient(
+            provider=DEFAULT_PROVIDER,
+            api_key=token,
+        )
+
+    except Exception as exc:
+        raise VisualGenerationError(
+            f"Could not create Hugging Face client: {exc}"
+        ) from exc
+
+    return client
 
 
 # ---------------------------------------------------------------------------
@@ -79,18 +139,18 @@ def _get_huggingface_token() -> str:
 def generate_image(
     prompt: str,
     output_path: Path,
-    width: int = 1280,
-    height: int = 720,
+    width: int = 1024,
+    height: int = 576,
 ) -> Path:
     """
     Generate one image from a text prompt.
 
     Args:
         prompt:
-            Description of the scene.
+            Description of the desired image.
 
         output_path:
-            File where the generated image will be saved.
+            Where the generated PNG should be saved.
 
         width:
             Requested image width.
@@ -109,8 +169,6 @@ def generate_image(
             "Image generation prompt cannot be empty."
         )
 
-    token = _get_huggingface_token()
-
     output_path = Path(output_path)
 
     output_path.parent.mkdir(
@@ -118,101 +176,71 @@ def generate_image(
         exist_ok=True,
     )
 
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json",
-        "Accept": "image/png",
-    }
+    model = _get_model()
 
-    payload = {
-        "inputs": prompt,
-        "parameters": {
-            "width": width,
-            "height": height,
-        },
-    }
+    client = _get_client()
+
+    print()
+    print("Starting AI image generation...")
+    print(f"Model: {model}")
+    print(f"Size: {width}x{height}")
+    print()
 
     try:
-        response = requests.post(
-            HF_API_URL,
-            headers=headers,
-            json=payload,
-            timeout=300,
+
+        image = client.text_to_image(
+            prompt=prompt,
+            model=model,
+            width=width,
+            height=height,
         )
 
-    except requests.Timeout as exc:
-        raise VisualGenerationError(
-            "Hugging Face image generation timed out."
-        ) from exc
-
-    except requests.RequestException as exc:
-        raise VisualGenerationError(
-            f"Could not connect to Hugging Face: {exc}"
-        ) from exc
-
-    # -----------------------------------------------------------------------
-    # Hugging Face returned an error
-    # -----------------------------------------------------------------------
-
-    if response.status_code != 200:
-
-        error_text = response.text[:3000]
+    except Exception as exc:
 
         raise VisualGenerationError(
             "Hugging Face image generation failed.\n"
-            f"HTTP status: {response.status_code}\n"
-            f"Response: {error_text}"
-        )
+            f"Model: {model}\n"
+            f"Error: {exc}"
+        ) from exc
 
     # -----------------------------------------------------------------------
-    # Verify that we actually received an image
-    # -----------------------------------------------------------------------
-
-    content_type = response.headers.get(
-        "content-type",
-        "",
-    ).lower()
-
-    if not content_type.startswith("image/"):
-
-        try:
-            response_text = response.text[:3000]
-        except Exception:
-            response_text = "<unable to read response>"
-
-        raise VisualGenerationError(
-            "Hugging Face did not return an image.\n"
-            f"Content-Type: {content_type}\n"
-            f"Response: {response_text}"
-        )
-
-    # -----------------------------------------------------------------------
-    # Save image
+    # Save the PIL image returned by Hugging Face
     # -----------------------------------------------------------------------
 
     try:
 
-        output_path.write_bytes(
-            response.content
+        image.save(
+            output_path,
+            format="PNG",
         )
 
-    except OSError as exc:
+    except Exception as exc:
 
         raise VisualGenerationError(
             f"Could not save generated image to "
             f"{output_path}: {exc}"
         ) from exc
 
+    # -----------------------------------------------------------------------
+    # Verify the file
+    # -----------------------------------------------------------------------
+
     if not output_path.exists():
+
         raise VisualGenerationError(
-            f"Image generation completed, but "
-            f"{output_path} was not created."
+            "The image generation request succeeded, "
+            "but the image file was not created."
         )
 
     if output_path.stat().st_size == 0:
+
         raise VisualGenerationError(
-            f"Generated image is empty: {output_path}"
+            f"The generated image is empty: {output_path}"
         )
+
+    print(
+        f"Image saved successfully: {output_path}"
+    )
 
     return output_path
 
@@ -231,12 +259,18 @@ def generate_scene_image(
 
     Example:
 
-        scene_prompt =
-            "A young explorer discovers an ancient city on Mars"
+        generate_scene_image(
+            scene_prompt=(
+                "A young explorer walks through a futuristic "
+                "city at night"
+            ),
+            output_dir=Path("generated"),
+            scene_number=1,
+        )
 
-    Output:
+    creates:
 
-        generated_scene_001.png
+        generated/generated_scene_001.png
     """
 
     scene_prompt = str(scene_prompt).strip()
@@ -247,13 +281,17 @@ def generate_scene_image(
         )
 
     try:
+
         scene_number = int(scene_number)
+
     except (TypeError, ValueError) as exc:
+
         raise ValueError(
             "scene_number must be a number."
         ) from exc
 
     if scene_number < 1:
+
         raise ValueError(
             "scene_number must be at least 1."
         )
@@ -270,36 +308,37 @@ def generate_scene_image(
         / f"generated_scene_{scene_number:03d}.png"
     )
 
-    # Add cinematic instructions to the planner's prompt.
+    # -----------------------------------------------------------------------
+    # Improve the planner's prompt for cinematic output
+    # -----------------------------------------------------------------------
+
     cinematic_prompt = (
-        f"{scene_prompt}, "
-        "cinematic movie still, "
+        f"{scene_prompt}. "
+        "Cinematic movie still, "
         "professional cinematography, "
         "dramatic lighting, "
-        "high detail, "
+        "highly detailed environment, "
         "realistic textures, "
         "strong visual storytelling, "
         "wide cinematic composition, "
-        "16:9 aspect ratio"
+        "widescreen film frame."
     )
 
+    print()
+    print("=" * 70)
     print(
-        f"Generating visual scene {scene_number}..."
+        f"GENERATING SCENE {scene_number}"
     )
+    print("=" * 70)
+    print(cinematic_prompt)
+    print("=" * 70)
 
-    image_path = generate_image(
+    return generate_image(
         prompt=cinematic_prompt,
         output_path=output_path,
-        width=1280,
-        height=720,
+        width=1024,
+        height=576,
     )
-
-    print(
-        f"Scene {scene_number} generated: "
-        f"{image_path}"
-    )
-
-    return image_path
 
 
 # ---------------------------------------------------------------------------
@@ -311,30 +350,38 @@ def generate_scene_images(
     output_dir: Path,
 ) -> list[Path]:
     """
-    Generate multiple scene images.
+    Generate multiple cinematic scene images.
 
     Args:
         scene_prompts:
-            List of cinematic scene descriptions.
+            List of scene descriptions.
 
         output_dir:
-            Directory where the generated images will be stored.
+            Directory where images will be saved.
 
     Returns:
         List of generated image paths.
     """
 
     if not scene_prompts:
+
         raise ValueError(
             "scene_prompts cannot be empty."
         )
 
     generated_images: list[Path] = []
 
+    total = len(scene_prompts)
+
     for index, prompt in enumerate(
         scene_prompts,
         start=1,
     ):
+
+        print()
+        print(
+            f"Generating scene {index}/{total}..."
+        )
 
         image_path = generate_scene_image(
             scene_prompt=prompt,
