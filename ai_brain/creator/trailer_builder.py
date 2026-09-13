@@ -1,103 +1,104 @@
-```python
 """
 trailer_builder.py
--------------------
+------------------
+
 Builds a complete AI-generated trailer.
 
-Pipeline:
+Workflow:
 
-    1. Receive the user's video idea
-    2. Generate scene descriptions
-    3. Generate an AI image for every scene
-    4. Turn each image into a video clip
-    5. Crossfade the clips together
-    6. Add music if available
-    7. Save the final MP4
+    1. Take the user's video idea.
+    2. Create a cinematic scene plan.
+    3. Generate an AI image for every scene.
+    4. Turn each generated image into a moving video clip.
+    5. Add captions.
+    6. Crossfade the scenes together.
+    7. Add optional background music.
+    8. Save the finished MP4 as trailer.mp4.
 
-The user no longer needs to manually provide images.
-
-Existing images can still be used if they are already present
-in the project's media/ folder.
+The generated images are kept in a temporary directory, so the project's
+media/ folder does not get filled with generated images.
 """
 
+from pathlib import Path
 import shutil
 import tempfile
-from pathlib import Path
 
-from ai_brain.creator import (
-    scene_planner,
-    ffmpeg_tools,
-    visual_generator,
-)
+from ai_brain.creator import scene_planner
+from ai_brain.creator import ffmpeg_tools
+from ai_brain.creator import visual_generator
 
 
-IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp"}
-AUDIO_EXTS = {".mp3", ".wav", ".m4a", ".aac"}
+AUDIO_EXTS = {
+    ".mp3",
+    ".wav",
+    ".m4a",
+    ".aac",
+    ".ogg",
+    ".flac",
+}
 
 
-def _generate_scene_prompts(idea: str, number_of_scenes: int) -> list[str]:
+def _find_music(media_dir: Path) -> list[Path]:
     """
-    Create scene prompts from the user's video idea.
-
-    The first version uses a simple local prompt builder so the
-    system can work without requiring another AI text API.
-
-    Later we can replace this with a more advanced AI story planner.
+    Find audio files inside the project's media/ directory.
     """
+    if not media_dir.exists():
+        return []
 
-    if number_of_scenes <= 0:
-        number_of_scenes = 5
+    return sorted(
+        file
+        for file in media_dir.iterdir()
+        if file.is_file() and file.suffix.lower() in AUDIO_EXTS
+    )
 
-    prompts = []
 
-    for i in range(number_of_scenes):
-        if i == 0:
-            prompt = (
-                f"{idea}. Opening establishing shot, "
-                "introducing the world and main subject."
-            )
+def _validate_scene_count(scene_count: int) -> int:
+    """
+    Keep the number of generated scenes within a reasonable range.
+    """
+    try:
+        scene_count = int(scene_count)
+    except (TypeError, ValueError):
+        raise ValueError("scene_count must be a number.")
 
-        elif i == number_of_scenes - 1:
-            prompt = (
-                f"{idea}. Dramatic final scene, "
-                "powerful cinematic ending."
-            )
+    if scene_count < 1:
+        raise ValueError("scene_count must be at least 1.")
 
-        else:
-            prompt = (
-                f"{idea}. Cinematic scene {i + 1}, "
-                "developing the story with dramatic action "
-                "and strong visual storytelling."
-            )
+    if scene_count > 20:
+        raise ValueError("scene_count cannot be greater than 20.")
 
-        prompts.append(prompt)
-
-    return prompts
+    return scene_count
 
 
 def build_trailer(
     project_dir: Path,
     idea: str,
-    number_of_scenes: int = 5,
+    scene_count: int = 5,
 ) -> Path:
     """
     Generate a complete AI trailer.
 
-    Args:
-        project_dir:
-            Project directory, for example:
+    Parameters
+    ----------
+    project_dir:
+        Directory belonging to the project.
 
-                data/projects/MyProject
+    idea:
+        The user's video/trailer idea.
 
-        idea:
-            User's video description.
+    scene_count:
+        Number of AI-generated scenes.
 
-        number_of_scenes:
-            Number of AI-generated scenes.
-
-    Returns:
-        Path to the final trailer.mp4 file.
+    Returns
+    -------
+    Path
+        Path to the finished trailer.mp4 file.
     """
+
+    if not idea or not idea.strip():
+        raise ValueError("A video idea is required.")
+
+    scene_count = _validate_scene_count(scene_count)
 
     project_dir = Path(project_dir)
     project_dir.mkdir(parents=True, exist_ok=True)
@@ -105,151 +106,195 @@ def build_trailer(
     media_dir = project_dir / "media"
     media_dir.mkdir(parents=True, exist_ok=True)
 
-    idea = str(idea).strip()
+    # Find optional background music.
+    music_files = _find_music(media_dir)
 
-    if not idea:
-        raise ValueError(
-            "A video idea is required."
-        )
+    print()
+    print("=" * 70)
+    print("AI TRAILER GENERATOR")
+    print("=" * 70)
+    print(f"Idea: {idea}")
+    print(f"Scenes: {scene_count}")
+    print("=" * 70)
+    print()
 
-    # ------------------------------------------------------------
-    # STEP 1
-    # Check for music supplied by the user.
-    # ------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # STEP 1 — Create the scene plan
+    # ------------------------------------------------------------------
 
-    all_files = list(media_dir.iterdir())
+    print("[1/5] Creating cinematic scene plan...")
 
-    music_files = [
-        f
-        for f in all_files
-        if f.is_file()
-        and f.suffix.lower() in AUDIO_EXTS
-    ]
-
-    # ------------------------------------------------------------
-    # STEP 2
-    # Generate scene prompts.
-    # ------------------------------------------------------------
-
-    scene_prompts = _generate_scene_prompts(
+    scene_plan = scene_planner.plan_ai_scenes(
         idea=idea,
-        number_of_scenes=number_of_scenes,
-    )
-
-    # ------------------------------------------------------------
-    # STEP 3
-    # Generate AI images.
-    # ------------------------------------------------------------
-
-    generated_images = []
-
-    try:
-        for index, prompt in enumerate(scene_prompts, start=1):
-
-            image_path = visual_generator.generate_scene_image(
-                scene_prompt=prompt,
-                output_dir=media_dir,
-                scene_number=index,
-            )
-
-            generated_images.append(image_path)
-
-    except Exception as exc:
-        raise RuntimeError(
-            "AI visual generation failed.\n\n"
-            f"{exc}"
-        ) from exc
-
-    if not generated_images:
-        raise RuntimeError(
-            "No images were generated."
-        )
-
-    # ------------------------------------------------------------
-    # STEP 4
-    # Ask the scene planner to arrange the generated scenes.
-    # ------------------------------------------------------------
-
-    scene_plan = scene_planner.plan_scenes(
-        idea,
-        [image.name for image in generated_images],
+        scene_count=scene_count,
     )
 
     if not scene_plan:
-        scene_plan = [
-            {
-                "file": image.name,
-                "text": "",
-                "duration": 3.0,
-            }
-            for image in generated_images
-        ]
+        raise RuntimeError("The scene planner did not create any scenes.")
 
-    # ------------------------------------------------------------
-    # STEP 5
-    # Convert every generated image into a video clip.
-    # ------------------------------------------------------------
+    print(f"Created {len(scene_plan)} scenes.")
 
-    with tempfile.TemporaryDirectory() as tmp:
+    # ------------------------------------------------------------------
+    # STEP 2 — Generate AI images
+    # ------------------------------------------------------------------
 
-        tmp_dir = Path(tmp)
+    with tempfile.TemporaryDirectory(prefix="ai_trailer_") as temp_folder:
+
+        temp_dir = Path(temp_folder)
+
+        generated_images_dir = temp_dir / "generated_images"
+        generated_images_dir.mkdir(parents=True, exist_ok=True)
+
+        print()
+        print("[2/5] Generating AI images...")
+
+        generated_scenes = []
+
+        for index, scene in enumerate(scene_plan, start=1):
+
+            prompt = str(scene.get("prompt", "")).strip()
+
+            if not prompt:
+                prompt = (
+                    f"Cinematic movie scene based on this idea: {idea}. "
+                    "Professional cinematography, dramatic lighting, "
+                    "high detail, widescreen composition."
+                )
+
+            print()
+            print(f"Generating scene {index}/{len(scene_plan)}...")
+            print(f"Prompt: {prompt}")
+
+            try:
+                image_path = visual_generator.generate_scene_image(
+                    scene_prompt=prompt,
+                    output_dir=generated_images_dir,
+                    scene_number=index,
+                )
+
+            except Exception as exc:
+                raise RuntimeError(
+                    f"Failed to generate AI image for scene {index}: {exc}"
+                ) from exc
+
+            generated_scenes.append(
+                {
+                    "image_path": Path(image_path),
+                    "text": str(scene.get("text", "")).strip(),
+                    "duration": float(scene.get("duration", 3.0)),
+                }
+            )
+
+            print(f"Saved: {image_path}")
+
+        # ------------------------------------------------------------------
+        # STEP 3 — Turn images into video clips
+        # ------------------------------------------------------------------
+
+        print()
+        print("[3/5] Turning AI images into video clips...")
+
+        clips_dir = temp_dir / "clips"
+        clips_dir.mkdir(parents=True, exist_ok=True)
+
         clip_paths = []
 
-        for index, scene in enumerate(scene_plan):
+        for index, scene in enumerate(generated_scenes, start=1):
 
-            image_path = media_dir / scene["file"]
+            image_path = scene["image_path"]
+            caption = scene["text"]
+            duration = scene["duration"]
 
-            if not image_path.exists():
-                continue
+            clip_path = clips_dir / f"scene_{index:03d}.mp4"
 
-            clip_path = tmp_dir / f"clip_{index:03d}.mp4"
-
-            ffmpeg_tools.image_to_clip(
-                image_path=image_path,
-                out_path=clip_path,
-                duration=float(
-                    scene.get("duration", 3.0)
-                ),
-                caption=scene.get("text", ""),
+            print(
+                f"Creating clip {index}/{len(generated_scenes)} "
+                f"({duration:.1f}s)..."
             )
+
+            try:
+                ffmpeg_tools.image_to_clip(
+                    image_path=image_path,
+                    out_path=clip_path,
+                    duration=duration,
+                    caption=caption,
+                )
+
+            except Exception as exc:
+                raise RuntimeError(
+                    f"Failed to create video clip for scene {index}: {exc}"
+                ) from exc
 
             clip_paths.append(clip_path)
 
         if not clip_paths:
-            raise RuntimeError(
-                "No video clips could be created from the generated scenes."
+            raise RuntimeError("No video clips were created.")
+
+        # ------------------------------------------------------------------
+        # STEP 4 — Combine all scenes
+        # ------------------------------------------------------------------
+
+        print()
+        print("[4/5] Combining scenes with cinematic transitions...")
+
+        combined_video = temp_dir / "combined.mp4"
+
+        try:
+            ffmpeg_tools.concat_with_crossfade(
+                clip_paths=clip_paths,
+                out_path=combined_video,
             )
 
-        # --------------------------------------------------------
-        # STEP 6
-        # Combine all scenes with crossfades.
-        # --------------------------------------------------------
+        except Exception as exc:
+            raise RuntimeError(
+                f"Failed to combine video clips: {exc}"
+            ) from exc
 
-        concatenated = tmp_dir / "concatenated.mp4"
+        # ------------------------------------------------------------------
+        # STEP 5 — Add music and save final MP4
+        # ------------------------------------------------------------------
 
-        ffmpeg_tools.concat_with_crossfade(
-            clip_paths,
-            concatenated,
-        )
-
-        # --------------------------------------------------------
-        # STEP 7
-        # Save final video.
-        # --------------------------------------------------------
+        print()
+        print("[5/5] Finalizing trailer...")
 
         final_path = project_dir / "trailer.mp4"
 
         if music_files:
-            ffmpeg_tools.add_music(
-                concatenated,
-                music_files[0],
-                final_path,
-            )
+            music_file = music_files[0]
+
+            print(f"Adding music: {music_file.name}")
+
+            try:
+                ffmpeg_tools.add_music(
+                    video_path=combined_video,
+                    music_path=music_file,
+                    out_path=final_path,
+                )
+
+            except Exception as exc:
+                raise RuntimeError(
+                    f"Failed to add background music: {exc}"
+                ) from exc
+
         else:
+            print("No background music found.")
+            print("Saving trailer without music.")
+
             shutil.copy2(
-                concatenated,
+                combined_video,
                 final_path,
             )
 
+    # ----------------------------------------------------------------------
+    # Finished
+    # ----------------------------------------------------------------------
+
+    print()
+    print("=" * 70)
+    print("TRAILER COMPLETE")
+    print("=" * 70)
+    print(f"Output: {final_path}")
+    print("=" * 70)
+    print()
+
     return final_path
-```
